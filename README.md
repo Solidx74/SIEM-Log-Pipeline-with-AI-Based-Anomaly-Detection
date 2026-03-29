@@ -1,0 +1,2 @@
+# SIEM-Log-Pipeline-with-AI-Based-Anomaly-Detection
+A production-ready Security Information and Event Management (SIEM) pipeline that collects, processes, and analyzes system logs in real-time using machine learning for anomaly detection. Features include log collection via HTTP/TCP/UDP/Syslog, JSON parsing, feature extraction, and real-time alerting with Isolation Forest, One-Class SVM algorithms.
