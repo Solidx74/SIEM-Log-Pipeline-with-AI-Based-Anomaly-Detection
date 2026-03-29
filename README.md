@@ -215,17 +215,19 @@ Alerting: Anomalies trigger alerts to configured channels
 
 
 
-📄 License
+# License
 This project is licensed under the MIT License - see the LICENSE file for details.
 
-🙏 Acknowledgments
+# Acknowledgments
 ->scikit-learn for ML algorithms
 
 ->watchdog for file monitoring
 
 ->Flask for HTTP server
 
-📧 Contact
+# Contact
 Kareeb Sadab 
+
 X: https://x.com/Solidx74 
+
 Gmail: kareebsadab@gmail.com
