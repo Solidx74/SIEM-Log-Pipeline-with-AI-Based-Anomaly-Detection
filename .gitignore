@@ -294,3 +294,20 @@ dmypy.json
 # Log rotation
 *.log.[0-9]*
 *.log.[0-9][0-9]*
+
+# Security: Never push secrets
+.env
+
+# Python: Ignore temporary files
+__pycache__/
+*.py[cod]
+*$py.class
+.venv/
+venv/
+
+# Logs: Optional (keep them local)
+logs/*.log
+logs/*.json
+logs/*.jsonl
+anomalies.jsonl
+alerts.jsonl

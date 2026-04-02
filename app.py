@@ -92,6 +92,7 @@ def load_user(user_id):
     user_data = users[user_id]
     return User(user_id, user_data.get('role', 'user'), user_data.get('email', ''))
 
+
 # File paths
 BASE_DIR = Path(__file__).parent
 FEATURES_FILE = BASE_DIR / "logs" / "logs_features.jsonl"
