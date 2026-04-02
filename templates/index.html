@@ -1,0 +1,539 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SENTINEL | AI-Powered SIEM Pipeline</title>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Orbitron:wght@400;600;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    
+    <script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
+    <script src="https://cdn.plot.ly/plotly-2.27.1.min.js"></script>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+</head>
+<body class="cyber-theme">
+    <!-- Animated Scanner Line -->
+    <div class="scanner-line"></div>
+    
+    <!-- Digital Rain Canvas Background -->
+    <canvas id="matrixCanvas"></canvas>
+    
+    <div class="wrapper">
+        <!-- Side Navigation -->
+        <nav class="side-nav">
+            <div class="logo">
+                <i class="fas fa-shield-virus"></i>
+                <span>SENTINEL</span>
+                <div class="logo-badge">AI</div>
+            </div>
+            <div class="nav-items">
+                <div class="nav-item active" data-page="dashboard">
+                    <i class="fas fa-chart-line"></i> 
+                    <span>Command Center</span>
+                    <div class="nav-indicator"></div>
+                </div>
+                <div class="nav-item" data-page="live-logs">
+                    <i class="fas fa-terminal"></i> 
+                    <span>Live Feed</span>
+                    <div class="nav-indicator"></div>
+                </div>
+                <div class="nav-item" data-page="threats">
+                    <i class="fas fa-biohazard"></i> 
+                    <span>Threat Intel</span>
+                    <div class="nav-indicator"></div>
+                </div>
+                <div class="nav-item" data-page="config">
+                    <i class="fas fa-cog"></i> 
+                    <span>Configuration</span>
+                    <div class="nav-indicator"></div>
+                </div>
+            </div>
+            <div class="system-health">
+                <small>SYSTEM STATUS</small>
+                <div class="pulse-container">
+                    <span class="pulse-dot"></span> 
+                    <span class="status-text">OPERATIONAL</span>
+                </div>
+                <div class="health-metrics">
+                    <div class="metric">
+                        <span>ML Engine</span>
+                        <span class="metric-value active">ONLINE</span>
+                    </div>
+                    <div class="metric">
+                        <span>Log Pipeline</span>
+                        <span class="metric-value active">ACTIVE</span>
+                    </div>
+                </div>
+            </div>
+        </nav>
+
+        <!-- Main Content Area -->
+        <main class="main-content">
+            <header class="top-bar">
+                <div class="breadcrumb">
+                    <i class="fas fa-home"></i> 
+                    <span id="breadcrumb-path">SEC-OPS / REAL-TIME / DASHBOARD</span>
+                </div>
+                <div class="timestamp" id="current-time">
+                    <i class="far fa-clock"></i> 
+                    00:00:00 UTC
+                </div>
+            </header>
+
+            <!-- Dashboard Page -->
+            <div id="dashboard-page" class="page-content active-page">
+                <section class="stats-container">
+                    <div class="stat-tile alert-tile">
+                        <div class="tile-header">
+                            <div class="tile-icon"><i class="fas fa-exclamation-triangle"></i></div>
+                            <div class="tile-label">CRITICAL ALERTS</div>
+                        </div>
+                        <div class="tile-value" id="alert-count">0</div>
+                        <div class="tile-trend up"><i class="fas fa-chart-line"></i> Real-time</div>
+                    </div>
+                    <div class="stat-tile anomaly-tile">
+                        <div class="tile-header">
+                            <div class="tile-icon"><i class="fas fa-microchip"></i></div>
+                            <div class="tile-label">ANOMALIES DETECTED</div>
+                        </div>
+                        <div class="tile-value" id="anomaly-count">0</div>
+                        <div class="tile-trend">ML Isolation Forest</div>
+                    </div>
+                    <div class="stat-tile">
+                        <div class="tile-header">
+                            <div class="tile-icon"><i class="fas fa-database"></i></div>
+                            <div class="tile-label">LOGS PROCESSED</div>
+                        </div>
+                        <div class="tile-value" id="log-count">0</div>
+                        <div class="tile-trend">Real-time</div>
+                    </div>
+                    <div class="stat-tile">
+                        <div class="tile-header">
+                            <div class="tile-icon"><i class="fas fa-clock"></i></div>
+                            <div class="tile-label">LAST INCIDENT</div>
+                        </div>
+                        <div class="tile-value" id="last-anomaly">N/A</div>
+                        <div class="tile-trend">Last 24h</div>
+                    </div>
+                </section>
+
+                <section class="grid-layout">
+                    <div class="panel chart-panel">
+                        <div class="panel-header">
+                            <span><i class="fas fa-chart-line"></i> THREAT PROBABILITY TREND</span>
+                            <span class="badge">24h</span>
+                        </div>
+                        <div id="anomaly-trend" class="plotly-graph"></div>
+                    </div>
+                    <div class="panel chart-panel">
+                        <div class="panel-header">
+                            <span><i class="fas fa-waveform"></i> INGESTION VOLUME</span>
+                            <span class="badge">events/sec</span>
+                        </div>
+                        <div id="log-volume" class="plotly-graph"></div>
+                    </div>
+                </section>
+
+                <section class="grid-layout">
+                    <div class="panel chart-panel">
+                        <div class="panel-header">
+                            <span><i class="fas fa-chart-pie"></i> ALERT DISTRIBUTION</span>
+                            <span class="badge">by Algorithm</span>
+                        </div>
+                        <div id="alert-types" class="plotly-graph"></div>
+                    </div>
+                    <div class="panel">
+                        <div class="panel-header">
+                            <span><i class="fas fa-robot"></i> ML MODEL STATUS</span>
+                            <span class="badge active">ACTIVE</span>
+                        </div>
+                        <div class="model-status">
+                            <div class="model-item">
+                                <span>Isolation Forest</span>
+                                <div class="progress-bar"><div class="progress" style="width: 100%"></div></div>
+                            </div>
+                            <div class="model-item">
+                                <span>Local Outlier Factor</span>
+                                <div class="progress-bar"><div class="progress" style="width: 85%"></div></div>
+                            </div>
+                            <div class="model-item">
+                                <span>One-Class SVM</span>
+                                <div class="progress-bar"><div class="progress" style="width: 70%"></div></div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <section class="log-viewer">
+                    <div class="panel">
+                        <div class="panel-header">
+                            <span><i class="fas fa-list"></i> REAL-TIME THREAT FEED</span>
+                            <div class="panel-actions">
+                                <button class="export-btn" onclick="exportAlerts()">
+                                    <i class="fas fa-download"></i> EXPORT CSV
+                                </button>
+                                <button class="refresh-btn" onclick="refreshData()">
+                                    <i class="fas fa-sync-alt"></i>
+                                </button>
+                            </div>
+                        </div>
+                        <div class="table-wrapper">
+                            <table id="alerts-table">
+                                <thead>
+                                    <tr>
+                                        <th><i class="far fa-calendar-alt"></i> TIMESTAMP</th>
+                                        <th><i class="fas fa-brain"></i> ALGORITHM</th>
+                                        <th><i class="fas fa-chart-simple"></i> RISK SCORE</th>
+                                        <th><i class="fas fa-id-card"></i> ENTITY ID</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr class="loading-row">
+                                        <td colspan="4">Loading threat intelligence...</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </section>
+            </div>
+
+            <!-- Live Logs Page -->
+            <div id="live-logs-page" class="page-content">
+                <div class="panel">
+                    <div class="panel-header">
+                        <span><i class="fas fa-terminal"></i> LIVE LOG STREAM</span>
+                        <span class="badge">real-time</span>
+                    </div>
+                    <div class="table-wrapper" style="height: 600px;">
+                        <table id="logs-table">
+                            <thead>
+                                <tr>
+                                    <th>TIMESTAMP</th>
+                                    <th>SERVICE</th>
+                                    <th>HOSTNAME</th>
+                                    <th>MESSAGE</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr class="loading-row">
+                                    <td colspan="4">Loading logs...</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Threats Page -->
+            <div id="threats-page" class="page-content">
+                <div class="panel">
+                    <div class="panel-header">
+                        <span><i class="fas fa-biohazard"></i> THREAT INTELLIGENCE</span>
+                        <span class="badge">anomaly detection</span>
+                    </div>
+                    <div class="table-wrapper">
+                        <table id="anomalies-detailed-table">
+                            <thead>
+                                <tr>
+                                    <th>TIMESTAMP</th>
+                                    <th>DETECTION METHOD</th>
+                                    <th>CONFIDENCE SCORE</th>
+                                    <th>RAW LOG</th>
+                                    <th>RISK LEVEL</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr class="loading-row">
+                                    <td colspan="5">No threats detected...</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Config Page -->
+            <div id="config-page" class="page-content">
+                <div class="panel">
+                    <div class="panel-header">
+                        <span><i class="fas fa-cog"></i> SYSTEM CONFIGURATION</span>
+                        <span class="badge">settings</span>
+                    </div>
+                    <div class="config-section">
+                        <div class="config-group">
+                            <h3><i class="fas fa-chart-line"></i> Detection Settings</h3>
+                            <div class="config-item">
+                                <label>Algorithm:</label>
+                                <span id="config-algorithm">Isolation Forest</span>
+                            </div>
+                            <div class="config-item">
+                                <label>Contamination Rate:</label>
+                                <span id="config-contamination">0.1</span>
+                            </div>
+                            <div class="config-item">
+                                <label>Batch Size:</label>
+                                <span id="config-batch-size">100</span>
+                            </div>
+                        </div>
+                        <div class="config-group">
+                            <h3><i class="fas fa-database"></i> Pipeline Status</h3>
+                            <div class="config-item">
+                                <label>Log Collector:</label>
+                                <span id="collector-status" class="status-badge active">Running</span>
+                            </div>
+                            <div class="config-item">
+                                <label>Parser Status:</label>
+                                <span id="parser-status" class="status-badge active">Active</span>
+                            </div>
+                            <div class="config-item">
+                                <label>Feature Extractor:</label>
+                                <span id="feature-status" class="status-badge active">Active</span>
+                            </div>
+                            <div class="config-item">
+                                <label>Anomaly Detector:</label>
+                                <span id="detector-status" class="status-badge active">Running</span>
+                            </div>
+                        </div>
+                        <div class="config-group">
+                            <h3><i class="fas fa-folder"></i> File Paths</h3>
+                            <div class="config-item">
+                                <label>Raw Logs:</label>
+                                <span id="raw-logs-path">logs/raw_logs.log</span>
+                            </div>
+                            <div class="config-item">
+                                <label>Parsed Logs:</label>
+                                <span id="parsed-logs-path">logs/logs_parsed.json</span>
+                            </div>
+                            <div class="config-item">
+                                <label>Features File:</label>
+                                <span id="features-path">logs/logs_features.jsonl</span>
+                            </div>
+                            <div class="config-item">
+                                <label>Alerts File:</label>
+                                <span id="alerts-path">alerts.jsonl</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        // Navigation handling
+        document.querySelectorAll('.nav-item').forEach(item => {
+            item.addEventListener('click', function() {
+                const page = this.getAttribute('data-page');
+                
+                // Update active state in sidebar
+                document.querySelectorAll('.nav-item').forEach(nav => nav.classList.remove('active'));
+                this.classList.add('active');
+                
+                // Hide all pages
+                document.querySelectorAll('.page-content').forEach(pageDiv => {
+                    pageDiv.classList.remove('active-page');
+                });
+                
+                // Show selected page
+                document.getElementById(`${page}-page`).classList.add('active-page');
+                
+                // Update breadcrumb
+                const pageNames = {
+                    'dashboard': 'SEC-OPS / REAL-TIME / DASHBOARD',
+                    'live-logs': 'SEC-OPS / LIVE LOGS / STREAM',
+                    'threats': 'SEC-OPS / THREAT INTEL / ANALYSIS',
+                    'config': 'SEC-OPS / SYSTEM / CONFIGURATION'
+                };
+                document.getElementById('breadcrumb-path').innerText = pageNames[page] || page.toUpperCase();
+                
+                // Load page-specific data
+                if (page === 'live-logs') {
+                    loadLiveLogs();
+                } else if (page === 'threats') {
+                    loadThreatsPage();
+                } else if (page === 'config') {
+                    loadConfigPage();
+                }
+            });
+        });
+        
+        // Page-specific data loading functions
+        function loadLiveLogs() {
+            $.get('/api/logs', function(data) {
+                var tbody = $('#logs-table tbody');
+                tbody.empty();
+                if (data.length === 0) {
+                    tbody.append('<tr class="loading-row"><td colspan="4">No logs available...</td></tr>');
+                    return;
+                }
+                data.forEach(function(log) {
+                    tbody.append(`
+                        <tr>
+                            <td>${new Date(log.timestamp).toLocaleString()}</td>
+                            <td>${log.service || 'unknown'}</td>
+                            <td>${log.hostname || 'localhost'}</td>
+                            <td style="max-width: 500px; overflow-x: auto;">${escapeHtml(log.message || log.raw_line || '')}</td>
+                        </tr>
+                    `);
+                });
+            });
+        }
+        
+        function loadThreatsPage() {
+            $.get('/api/anomalies', function(data) {
+                var tbody = $('#anomalies-detailed-table tbody');
+                tbody.empty();
+                if (data.length === 0) {
+                    tbody.append('<tr class="loading-row"><td colspan="5">No threats detected. System secure.</td></tr>');
+                    return;
+                }
+                data.forEach(function(anomaly) {
+                    let riskLevel = anomaly.anomaly_score < -0.3 ? 'CRITICAL' : 'HIGH';
+                    let riskColor = anomaly.anomaly_score < -0.3 ? '#ff3e3e' : '#ffaa00';
+                    tbody.append(`
+                        <tr>
+                            <td>${new Date(anomaly.timestamp).toLocaleString()}</td>
+                            <td>${anomaly.algorithm}</td>
+                            <td style="color: ${riskColor};">${anomaly.anomaly_score.toFixed(4)}</td>
+                            <td style="max-width: 400px; overflow-x: auto;">${escapeHtml(anomaly.raw_line.substring(0, 150))}${anomaly.raw_line.length > 150 ? '...' : ''}</td>
+                            <td style="color: ${riskColor};">${riskLevel}</td>
+                        </tr>
+                    `);
+                });
+            });
+        }
+        
+        function loadConfigPage() {
+            $.get('/api/config', function(data) {
+                $('#config-algorithm').text(data.algorithm || 'Isolation Forest');
+                $('#config-contamination').text(data.contamination || '0.1');
+                $('#config-batch-size').text(data.batch_size || '100');
+                $('#raw-logs-path').text(data.raw_logs_path || 'logs/raw_logs.log');
+                $('#parsed-logs-path').text(data.parsed_logs_path || 'logs/logs_parsed.json');
+                $('#features-path').text(data.features_path || 'logs/logs_features.jsonl');
+                $('#alerts-path').text(data.alerts_path || 'alerts.jsonl');
+            });
+        }
+        
+        function escapeHtml(text) {
+            if (!text) return '';
+            var div = document.createElement('div');
+            div.appendChild(document.createTextNode(text));
+            return div.innerHTML;
+        }
+        
+        // Matrix Canvas Background
+        const canvas = document.getElementById('matrixCanvas');
+        const ctx = canvas.getContext('2d');
+        
+        function resizeCanvas() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        }
+        
+        resizeCanvas();
+        
+        const matrix = "ABCDEFGHIJKLMNOPQRSTUVWXYZ123456789@#$%^&*()*&^%+-/~{[|`]}";
+        const matrixArray = matrix.split("");
+        const fontSize = 14;
+        const columns = canvas.width / fontSize;
+        const drops = [];
+        
+        for(let x = 0; x < columns; x++) {
+            drops[x] = 1;
+        }
+        
+        function drawMatrix() {
+            ctx.fillStyle = 'rgba(10, 11, 16, 0.04)';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            ctx.fillStyle = '#00f2ff';
+            ctx.font = fontSize + 'px "JetBrains Mono"';
+            for(let i = 0; i < drops.length; i++) {
+                const text = matrixArray[Math.floor(Math.random() * matrixArray.length)];
+                ctx.fillText(text, i * fontSize, drops[i] * fontSize);
+                if(drops[i] * fontSize > canvas.height && Math.random() > 0.975) {
+                    drops[i] = 0;
+                }
+                drops[i]++;
+            }
+        }
+        
+        setInterval(drawMatrix, 50);
+        window.addEventListener('resize', () => resizeCanvas());
+        
+        // Update clock
+        setInterval(() => {
+            document.getElementById('current-time').innerHTML = '<i class="far fa-clock"></i> ' + new Date().toUTCString().split(' ')[4] + " UTC";
+        }, 1000);
+        
+        window.exportAlerts = function() {
+            let csv = [];
+            let rows = document.querySelectorAll('#alerts-table tr');
+            for (let i = 0; i < rows.length; i++) {
+                let row = [], cols = rows[i].querySelectorAll('td, th');
+                for (let j = 0; j < cols.length; j++) {
+                    row.push('"' + cols[j].innerText.replace(/"/g, '""') + '"');
+                }
+                csv.push(row.join(','));
+            }
+            let blob = new Blob([csv.join('\n')], {type: 'text/csv'});
+            let link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            link.download = `sentinel_alerts_${new Date().toISOString().slice(0,19).replace(/:/g, '-')}.csv`;
+            link.click();
+        };
+        
+        window.refreshData = function() {
+            location.reload();
+        };
+    </script>
+    
+    <style>
+        .page-content {
+            display: none;
+        }
+        .active-page {
+            display: block;
+        }
+        .config-section {
+            padding: 20px;
+        }
+        .config-group {
+            margin-bottom: 30px;
+        }
+        .config-group h3 {
+            color: var(--accent-blue);
+            margin-bottom: 15px;
+            font-family: 'Orbitron', sans-serif;
+            font-size: 1rem;
+        }
+        .config-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 10px;
+            border-bottom: 1px solid var(--border-color);
+        }
+        .config-item label {
+            color: var(--text-dim);
+            font-weight: bold;
+        }
+        .config-item span {
+            color: var(--text-bright);
+            font-family: 'JetBrains Mono', monospace;
+        }
+        .status-badge {
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 0.7rem;
+        }
+        .status-badge.active {
+            background: rgba(0, 255, 157, 0.2);
+            color: var(--accent-green);
+        }
+    </style>
+    
+    <script src="{{ url_for('static', filename='js/dashboard.js') }}"></script>
+</body>
+</html>
