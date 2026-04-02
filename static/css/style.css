@@ -1,5 +1,6 @@
 :root {
     --bg-dark: #0a0b10;
+    --bg-darker: #05060a;
     --panel-bg: #14161f;
     --border-color: #262936;
     --accent-blue: #00f2ff;
@@ -7,6 +8,26 @@
     --accent-red: #ff3e3e;
     --text-dim: #8a8d9b;
     --text-bright: #e1e1e6;
+}
+
+/* Updated Scrollbar Section */
+::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+}
+
+::-webkit-scrollbar-track {
+    background: var(--bg-darker);
+}
+
+::-webkit-scrollbar-thumb {
+    background: var(--border-color);
+    border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: var(--accent-blue);
+    box-shadow: 0 0 5px var(--accent-blue);
 }
 
 body.cyber-theme {
@@ -354,7 +375,7 @@ tr:hover { background: rgba(0, 242, 255, 0.03); }
     }
 }
 
-/* Add these if not already in your CSS */
+
 .system-health {
     margin-top: auto;
     padding-top: 20px;
@@ -414,4 +435,31 @@ tr:hover { background: rgba(0, 242, 255, 0.03); }
 .nav-item.active .nav-indicator {
     opacity: 1;
     box-shadow: 0 0 8px var(--accent-blue);
+}
+
+.user-info {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    background: rgba(255, 255, 255, 0.05);
+    padding: 5px 15px;
+    border-radius: 20px;
+    border: 1px solid rgba(0, 242, 255, 0.2);
+}
+
+.username-display {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 0.8rem;
+    color: var(--accent-cyan);
+}
+
+.logout-btn {
+    color: #ff3e3e;
+    text-decoration: none;
+    transition: 0.3s ease;
+}
+
+.logout-btn:hover {
+    transform: scale(1.1);
+    filter: drop-shadow(0 0 5px #ff3e3e);
 }

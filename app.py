@@ -10,7 +10,9 @@ import time
 import threading
 from datetime import datetime, timedelta
 from pathlib import Path
-from flask import Flask, render_template, jsonify, request, send_file, copy_current_request_context
+from flask import Flask, render_template, jsonify, request, send_file, redirect, url_for, flash
+from flask_login import LoginManager, UserMixin, login_user, login_required, logout_user, current_user
+from werkzeug.security import generate_password_hash, check_password_hash
 from flask_socketio import SocketIO, emit
 from flask_cors import CORS
 import pandas as pd
@@ -27,10 +29,51 @@ logger = logging.getLogger(__name__)
 
 # Initialize Flask app
 app = Flask(__name__)
-app.config['SECRET_KEY'] = 'your-secret-key-change-this'
+app.config['SECRET_KEY'] = 'your-cyber-secret-key-change-this-to-random-string-2024'
 app.config['JSON_AS_ASCII'] = False
 CORS(app)  # Allow cross-origin requests if needed
 socketio = SocketIO(app, cors_allowed_origins="*")
+
+# Initialize Flask-Login
+login_manager = LoginManager()
+login_manager.init_app(app)
+login_manager.login_view = 'login'
+login_manager.login_message = 'Please log in to access the SIEM dashboard'
+login_manager.login_message_category = 'warning'
+
+# Mock Database for Users
+# In production, use a real database like SQLite or PostgreSQL
+# Passwords are hashed for security
+users = {
+    "Solid": {
+        "password": generate_password_hash("solid123"),
+        "role": "admin",
+        "email": "solid@sentinel.local"
+    },
+    "Analyst": {
+        "password": generate_password_hash("analyst456"),
+        "role": "analyst",
+        "email": "analyst@sentinel.local"
+    }
+}
+
+class User(UserMixin):
+    """User class for Flask-Login"""
+    def __init__(self, id, role='user', email=''):
+        self.id = id
+        self.role = role
+        self.email = email
+    
+    def is_admin(self):
+        return self.role == 'admin'
+
+@login_manager.user_loader
+def load_user(user_id):
+    """Load user by ID"""
+    if user_id not in users:
+        return None
+    user_data = users[user_id]
+    return User(user_id, user_data.get('role', 'user'), user_data.get('email', ''))
 
 # File paths (relative to project root)
 BASE_DIR = Path(__file__).parent
@@ -115,19 +158,62 @@ def start_file_watcher():
     logger.info("File watcher started for alerts file")
 
 # ---------------------------------------------
-# Routes
+# Authentication Routes
+# ---------------------------------------------
+@app.route('/login', methods=['GET', 'POST'])
+def login():
+    """Login page"""
+    if current_user.is_authenticated:
+        return redirect(url_for('index'))
+    
+    if request.method == 'POST':
+        username = request.form.get('username')
+        password = request.form.get('password')
+        
+        if not username or not password:
+            flash('Please enter both username and password', 'error')
+            return render_template('login.html')
+        
+        user_data = users.get(username)
+        if user_data and check_password_hash(user_data['password'], password):
+            user_obj = User(username, user_data.get('role', 'user'), user_data.get('email', ''))
+            login_user(user_obj)
+            logger.info(f"User {username} logged in successfully")
+            flash(f'Welcome back, {username}!', 'success')
+            return redirect(url_for('index'))
+        else:
+            logger.warning(f"Failed login attempt for username: {username}")
+            flash('Invalid Security Credentials', 'error')
+    
+    return render_template('login.html')
+
+@app.route('/logout')
+@login_required
+def logout():
+    """Logout user"""
+    username = current_user.id
+    logout_user()
+    logger.info(f"User {username} logged out")
+    flash('You have been logged out successfully', 'info')
+    return redirect(url_for('login'))
+
+# ---------------------------------------------
+# Protected Routes (require authentication)
 # ---------------------------------------------
 @app.route('/')
+@login_required
 def index():
     """Dashboard main page"""
-    return render_template('index.html')
+    return render_template('index.html', user=current_user)
 
 @app.route('/api/stats')
+@login_required
 def get_stats():
     """Return overall statistics"""
     return jsonify(get_stats_data())
 
 @app.route('/api/anomalies')
+@login_required
 def get_anomalies():
     """Return recent anomalies (last 100)"""
     limit = int(request.args.get('limit', 100))
@@ -144,6 +230,7 @@ def get_anomalies():
     return jsonify(anomalies)
 
 @app.route('/api/logs')
+@login_required
 def get_logs():
     """Return recent logs (last 100)"""
     limit = int(request.args.get('limit', 100))
@@ -159,6 +246,7 @@ def get_logs():
     return jsonify(logs)
 
 @app.route('/api/alerts')
+@login_required
 def get_alerts():
     """Return recent alerts (last 100)"""
     limit = int(request.args.get('limit', 100))
@@ -174,6 +262,7 @@ def get_alerts():
     return jsonify(alerts)
 
 @app.route('/api/config')
+@login_required
 def get_config():
     """Return system configuration"""
     return jsonify({
@@ -186,10 +275,13 @@ def get_config():
         'alerts_path': str(ALERTS_FILE),
         'engine_status': 'Online',
         'update_interval': '5s',
-        'active_algorithms': ['Isolation Forest', 'LOF', 'One-Class SVM']
+        'active_algorithms': ['Isolation Forest', 'LOF', 'One-Class SVM'],
+        'user': current_user.id,
+        'user_role': current_user.role
     })
 
 @app.route('/api/charts/anomaly_trend')
+@login_required
 def anomaly_trend():
     """Return data for anomaly trend chart (last 24 hours)"""
     # Aggregate anomalies per hour
@@ -232,6 +324,7 @@ def anomaly_trend():
     return jsonify(plotly_json.dumps(fig, cls=plotly.utils.PlotlyJSONEncoder))
 
 @app.route('/api/charts/log_volume')
+@login_required
 def log_volume():
     """Return data for log volume chart (last 24 hours)"""
     hours = 24
@@ -269,6 +362,7 @@ def log_volume():
     return jsonify(plotly_json.dumps(fig, cls=plotly.utils.PlotlyJSONEncoder))
 
 @app.route('/api/charts/alert_types')
+@login_required
 def alert_types():
     """Return distribution of alert types (algorithms used)"""
     alert_types = {}
@@ -294,12 +388,14 @@ def alert_types():
 # ---------------------------------------------
 @socketio.on('connect')
 def handle_connect():
-    logger.info("Client connected")
-    emit('connected', {'data': 'Connected to SIEM dashboard'})
+    """Handle WebSocket connection"""
+    # Note: WebSocket authentication is handled separately
+    # For production, implement token-based auth
+    logger.info(f"Client connected: {request.sid}")
 
 @socketio.on('disconnect')
 def handle_disconnect():
-    logger.info("Client disconnected")
+    logger.info(f"Client disconnected: {request.sid}")
 
 # ---------------------------------------------
 # Background Thread for Periodic Updates
@@ -325,5 +421,10 @@ if __name__ == '__main__':
     socketio.start_background_task(background_updater)
     
     # Run the app
-    logger.info("Starting SIEM Dashboard on http://localhost:5000")
+    logger.info("Starting SENTINEL SIEM Dashboard on http://localhost:5000")
+    logger.info("Login credentials:")
+    logger.info("  Username: Solid")
+    logger.info("  Password: solid123")
+    logger.info("  Username: Analyst")
+    logger.info("  Password: analyst456")
     socketio.run(app, host='0.0.0.0', port=5000, debug=True, allow_unsafe_werkzeug=True)

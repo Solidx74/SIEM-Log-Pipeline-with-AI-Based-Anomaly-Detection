@@ -16,9 +16,6 @@
     <!-- Animated Scanner Line -->
     <div class="scanner-line"></div>
     
-    <!-- Digital Rain Canvas Background -->
-    <canvas id="matrixCanvas"></canvas>
-    
     <div class="wrapper">
         <!-- Side Navigation -->
         <nav class="side-nav">
@@ -75,14 +72,24 @@
                     <i class="fas fa-home"></i> 
                     <span id="breadcrumb-path">SEC-OPS / REAL-TIME / DASHBOARD</span>
                 </div>
-                <div class="timestamp" id="current-time">
-                    <i class="far fa-clock"></i> 
-                    00:00:00 UTC
+                <div class="right-section">
+                    <div class="user-info">
+                        <i class="fas fa-user-shield"></i>
+                        <span>{{ user.id if user else 'Analyst' }}</span>
+                        <a href="{{ url_for('logout') }}" class="logout-btn" title="Logout">
+                            <i class="fas fa-sign-out-alt"></i>
+                        </a>
+                    </div>
+                    <div class="timestamp" id="current-time">
+                        <i class="far fa-clock"></i> 
+                        00:00:00 UTC
+                    </div>
                 </div>
             </header>
 
             <!-- Dashboard Page -->
             <div id="dashboard-page" class="page-content active-page">
+                <!-- ... (rest of dashboard content unchanged) ... -->
                 <section class="stats-container">
                     <div class="stat-tile alert-tile">
                         <div class="tile-header">
@@ -190,7 +197,7 @@
                                 </thead>
                                 <tbody>
                                     <tr class="loading-row">
-                                        <td colspan="4">Loading threat intelligence...</td>
+                                        <td colspan="4">Loading threat intelligence...<\/td>
                                     </tr>
                                 </tbody>
                             </table>
@@ -218,7 +225,7 @@
                             </thead>
                             <tbody>
                                 <tr class="loading-row">
-                                    <td colspan="4">Loading logs...</td>
+                                    <td colspan="4">Loading logs...<\/td>
                                 </tr>
                             </tbody>
                         </table>
@@ -246,7 +253,7 @@
                             </thead>
                             <tbody>
                                 <tr class="loading-row">
-                                    <td colspan="5">No threats detected...</td>
+                                    <td colspan="5">No threats detected...<\/td>
                                 </tr>
                             </tbody>
                         </table>
@@ -322,24 +329,16 @@
     </div>
 
     <script>
-        // Navigation handling
+        // Navigation handling (same as before)
         document.querySelectorAll('.nav-item').forEach(item => {
             item.addEventListener('click', function() {
                 const page = this.getAttribute('data-page');
-                
-                // Update active state in sidebar
                 document.querySelectorAll('.nav-item').forEach(nav => nav.classList.remove('active'));
                 this.classList.add('active');
-                
-                // Hide all pages
                 document.querySelectorAll('.page-content').forEach(pageDiv => {
                     pageDiv.classList.remove('active-page');
                 });
-                
-                // Show selected page
                 document.getElementById(`${page}-page`).classList.add('active-page');
-                
-                // Update breadcrumb
                 const pageNames = {
                     'dashboard': 'SEC-OPS / REAL-TIME / DASHBOARD',
                     'live-logs': 'SEC-OPS / LIVE LOGS / STREAM',
@@ -347,35 +346,28 @@
                     'config': 'SEC-OPS / SYSTEM / CONFIGURATION'
                 };
                 document.getElementById('breadcrumb-path').innerText = pageNames[page] || page.toUpperCase();
-                
-                // Load page-specific data
-                if (page === 'live-logs') {
-                    loadLiveLogs();
-                } else if (page === 'threats') {
-                    loadThreatsPage();
-                } else if (page === 'config') {
-                    loadConfigPage();
-                }
+                if (page === 'live-logs') loadLiveLogs();
+                else if (page === 'threats') loadThreatsPage();
+                else if (page === 'config') loadConfigPage();
             });
         });
         
-        // Page-specific data loading functions
         function loadLiveLogs() {
             $.get('/api/logs', function(data) {
                 var tbody = $('#logs-table tbody');
                 tbody.empty();
                 if (data.length === 0) {
-                    tbody.append('<tr class="loading-row"><td colspan="4">No logs available...</td></tr>');
+                    tbody.append('<tr class="loading-row"><td colspan="4">No logs available...<\/td></tr>');
                     return;
                 }
                 data.forEach(function(log) {
                     tbody.append(`
                         <tr>
-                            <td>${new Date(log.timestamp).toLocaleString()}</td>
-                            <td>${log.service || 'unknown'}</td>
-                            <td>${log.hostname || 'localhost'}</td>
-                            <td style="max-width: 500px; overflow-x: auto;">${escapeHtml(log.message || log.raw_line || '')}</td>
-                        </tr>
+                            <td>${new Date(log.timestamp).toLocaleString()}<\/td>
+                            <td>${log.service || 'unknown'}<\/td>
+                            <td>${log.hostname || 'localhost'}<\/td>
+                            <td style="max-width: 500px; overflow-x: auto;">${escapeHtml(log.message || log.raw_line || '')}<\/td>
+                        <\/tr>
                     `);
                 });
             });
@@ -386,7 +378,7 @@
                 var tbody = $('#anomalies-detailed-table tbody');
                 tbody.empty();
                 if (data.length === 0) {
-                    tbody.append('<tr class="loading-row"><td colspan="5">No threats detected. System secure.</td></tr>');
+                    tbody.append('<tr class="loading-row"><td colspan="5">No threats detected. System secure.<\/td><\/tr>');
                     return;
                 }
                 data.forEach(function(anomaly) {
@@ -394,12 +386,12 @@
                     let riskColor = anomaly.anomaly_score < -0.3 ? '#ff3e3e' : '#ffaa00';
                     tbody.append(`
                         <tr>
-                            <td>${new Date(anomaly.timestamp).toLocaleString()}</td>
-                            <td>${anomaly.algorithm}</td>
-                            <td style="color: ${riskColor};">${anomaly.anomaly_score.toFixed(4)}</td>
-                            <td style="max-width: 400px; overflow-x: auto;">${escapeHtml(anomaly.raw_line.substring(0, 150))}${anomaly.raw_line.length > 150 ? '...' : ''}</td>
-                            <td style="color: ${riskColor};">${riskLevel}</td>
-                        </tr>
+                            <td>${new Date(anomaly.timestamp).toLocaleString()}<\/td>
+                            <td>${anomaly.algorithm}<\/td>
+                            <td style="color: ${riskColor};">${anomaly.anomaly_score.toFixed(4)}<\/td>
+                            <td style="max-width: 400px; overflow-x: auto;">${escapeHtml(anomaly.raw_line.substring(0, 150))}${anomaly.raw_line.length > 150 ? '...' : ''}<\/td>
+                            <td style="color: ${riskColor};">${riskLevel}<\/td>
+                        <\/tr>
                     `);
                 });
             });
@@ -424,46 +416,6 @@
             return div.innerHTML;
         }
         
-        // Matrix Canvas Background
-        const canvas = document.getElementById('matrixCanvas');
-        const ctx = canvas.getContext('2d');
-        
-        function resizeCanvas() {
-            canvas.width = window.innerWidth;
-            canvas.height = window.innerHeight;
-        }
-        
-        resizeCanvas();
-        
-        const matrix = "ABCDEFGHIJKLMNOPQRSTUVWXYZ123456789@#$%^&*()*&^%+-/~{[|`]}";
-        const matrixArray = matrix.split("");
-        const fontSize = 14;
-        const columns = canvas.width / fontSize;
-        const drops = [];
-        
-        for(let x = 0; x < columns; x++) {
-            drops[x] = 1;
-        }
-        
-        function drawMatrix() {
-            ctx.fillStyle = 'rgba(10, 11, 16, 0.04)';
-            ctx.fillRect(0, 0, canvas.width, canvas.height);
-            ctx.fillStyle = '#00f2ff';
-            ctx.font = fontSize + 'px "JetBrains Mono"';
-            for(let i = 0; i < drops.length; i++) {
-                const text = matrixArray[Math.floor(Math.random() * matrixArray.length)];
-                ctx.fillText(text, i * fontSize, drops[i] * fontSize);
-                if(drops[i] * fontSize > canvas.height && Math.random() > 0.975) {
-                    drops[i] = 0;
-                }
-                drops[i]++;
-            }
-        }
-        
-        setInterval(drawMatrix, 50);
-        window.addEventListener('resize', () => resizeCanvas());
-        
-        // Update clock
         setInterval(() => {
             document.getElementById('current-time').innerHTML = '<i class="far fa-clock"></i> ' + new Date().toUTCString().split(' ')[4] + " UTC";
         }, 1000);
@@ -491,6 +443,39 @@
     </script>
     
     <style>
+        /* Additional styles for logout button and user info */
+        .right-section {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            background: rgba(0, 242, 255, 0.1);
+            padding: 5px 12px;
+            border-radius: 20px;
+            border: 1px solid var(--accent-blue);
+        }
+        .user-info i {
+            color: var(--accent-green);
+        }
+        .user-info span {
+            color: var(--text-bright);
+            font-size: 0.8rem;
+            font-weight: bold;
+        }
+        .logout-btn {
+            color: var(--text-dim);
+            text-decoration: none;
+            transition: 0.3s;
+            margin-left: 5px;
+        }
+        .logout-btn:hover {
+            color: var(--accent-red);
+            transform: scale(1.1);
+        }
         .page-content {
             display: none;
         }
@@ -531,6 +516,13 @@
         .status-badge.active {
             background: rgba(0, 255, 157, 0.2);
             color: var(--accent-green);
+        }
+        /* Ensure the top-bar flex layout works */
+        .top-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
         }
     </style>
     
