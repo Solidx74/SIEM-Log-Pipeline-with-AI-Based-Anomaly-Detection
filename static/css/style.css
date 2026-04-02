@@ -151,3 +151,267 @@ tr:hover { background: rgba(0, 242, 255, 0.03); }
     50% { opacity: 0.4; }
     100% { opacity: 1; }
 }
+
+
+/* Page Transitions */
+.page-content {
+    display: none;
+    animation: fadeIn 0.3s ease-in-out;
+}
+
+.active-page {
+    display: block;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Badge Styles */
+.badge {
+    background: rgba(0, 242, 255, 0.1);
+    padding: 2px 8px;
+    border-radius: 12px;
+    font-size: 0.7rem;
+    color: var(--accent-blue);
+}
+
+.badge.active {
+    background: rgba(0, 255, 157, 0.1);
+    color: var(--accent-green);
+}
+
+/* Config Page Styles */
+.config-section {
+    padding: 20px;
+}
+
+.config-group {
+    margin-bottom: 30px;
+    background: rgba(255, 255, 255, 0.02);
+    padding: 15px;
+    border-radius: 8px;
+}
+
+.config-group h3 {
+    color: var(--accent-blue);
+    margin-bottom: 15px;
+    font-family: 'Orbitron', sans-serif;
+    font-size: 1rem;
+}
+
+.config-item {
+    display: flex;
+    justify-content: space-between;
+    padding: 10px;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.config-item:last-child {
+    border-bottom: none;
+}
+
+.config-item label {
+    color: var(--text-dim);
+    font-weight: bold;
+}
+
+.config-item span {
+    color: var(--text-bright);
+    font-family: 'JetBrains Mono', monospace;
+}
+
+.status-badge {
+    padding: 2px 8px;
+    border-radius: 12px;
+    font-size: 0.7rem;
+}
+
+.status-badge.active {
+    background: rgba(0, 255, 157, 0.2);
+    color: var(--accent-green);
+}
+
+.status-badge.warning {
+    background: rgba(255, 170, 0, 0.2);
+    color: var(--accent-yellow);
+}
+
+/* Risk Level Colors */
+.risk-critical {
+    color: var(--accent-red);
+    font-weight: bold;
+}
+
+.risk-high {
+    color: #ffaa00;
+    font-weight: bold;
+}
+
+.risk-medium {
+    color: var(--accent-blue);
+}
+
+/* Entity ID Style */
+.entity-id {
+    font-family: 'JetBrains Mono', monospace;
+    color: var(--text-dim);
+    font-size: 0.7rem;
+}
+
+/* Panel Actions */
+.panel-actions {
+    display: flex;
+    gap: 10px;
+}
+
+.export-btn, .refresh-btn {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid var(--border-color);
+    color: var(--text-bright);
+    padding: 5px 12px;
+    border-radius: 4px;
+    font-size: 0.7rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-family: 'JetBrains Mono', monospace;
+}
+
+.export-btn:hover, .refresh-btn:hover {
+    background: var(--accent-blue);
+    color: var(--bg-dark);
+    border-color: var(--accent-blue);
+}
+
+/* Loading Row */
+.loading-row td {
+    text-align: center;
+    padding: 40px;
+    color: var(--text-dim);
+}
+
+/* Scrollbar for tables */
+.table-wrapper {
+    overflow-x: auto;
+    max-height: 400px;
+    overflow-y: auto;
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+}
+
+::-webkit-scrollbar-track {
+    background: var(--bg-darker);
+}
+
+::-webkit-scrollbar-thumb {
+    background: var(--border-color);
+    border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: var(--accent-blue);
+}
+
+/* Responsive Design */
+@media (max-width: 1200px) {
+    .stats-container {
+        grid-template-columns: repeat(2, 1fr);
+    }
+    
+    .grid-layout {
+        grid-template-columns: 1fr;
+    }
+    
+    .side-nav {
+        width: 80px;
+    }
+    
+    .side-nav span:not(.logo-badge) {
+        display: none;
+    }
+    
+    .logo span {
+        display: none;
+    }
+    
+    .system-health small, .system-health .status-text, .health-metrics {
+        display: none;
+    }
+    
+    .main-content {
+        padding: 15px;
+    }
+}
+
+/* Add these if not already in your CSS */
+.system-health {
+    margin-top: auto;
+    padding-top: 20px;
+    border-top: 1px solid var(--border-color);
+}
+
+.system-health small {
+    color: var(--text-dim);
+    font-size: 0.7rem;
+    letter-spacing: 1px;
+}
+
+.pulse-container {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin: 10px 0;
+    font-size: 0.85rem;
+}
+
+.health-metrics {
+    margin-top: 10px;
+}
+
+.metric {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.75rem;
+    padding: 5px 0;
+    color: var(--text-dim);
+}
+
+.metric-value.active {
+    color: var(--accent-green);
+    text-shadow: 0 0 4px var(--accent-green);
+}
+
+.logo-badge {
+    font-size: 0.6rem;
+    background: var(--accent-red);
+    padding: 2px 6px;
+    border-radius: 4px;
+    margin-left: auto;
+    font-weight: bold;
+}
+
+.nav-indicator {
+    position: absolute;
+    right: 10px;
+    width: 4px;
+    height: 4px;
+    background: var(--accent-blue);
+    border-radius: 50%;
+    opacity: 0;
+}
+
+.nav-item.active .nav-indicator {
+    opacity: 1;
+    box-shadow: 0 0 8px var(--accent-blue);
+}

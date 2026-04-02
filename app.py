@@ -173,6 +173,22 @@ def get_alerts():
             logger.error(f"Error reading alerts: {e}")
     return jsonify(alerts)
 
+@app.route('/api/config')
+def get_config():
+    """Return system configuration"""
+    return jsonify({
+        'algorithm': 'Isolation Forest',
+        'contamination': 0.1,
+        'batch_size': 100,
+        'raw_logs_path': str(RAW_LOGS_FILE),
+        'parsed_logs_path': str(PARSED_LOGS_FILE),
+        'features_path': str(FEATURES_FILE),
+        'alerts_path': str(ALERTS_FILE),
+        'engine_status': 'Online',
+        'update_interval': '5s',
+        'active_algorithms': ['Isolation Forest', 'LOF', 'One-Class SVM']
+    })
+
 @app.route('/api/charts/anomaly_trend')
 def anomaly_trend():
     """Return data for anomaly trend chart (last 24 hours)"""
