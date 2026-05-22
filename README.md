@@ -29,19 +29,6 @@ A production-ready Security Information and Event Management (SIEM) pipeline tha
 - [Contributing](#contributing)
 - [License](#license)
 
-##  Architecture Overview
-
-┌─────────────────┐ ┌─────────────────┐ ┌─────────────────┐
-│ Log Forwarder │────▶│ Log Collector │────▶│ Log Parser │
-│ (systemd/journal│ │ (HTTP/TCP/UDP) │ │ (JSON Conversion)│
-│ or Mock Gen) │ └─────────────────┘ └─────────────────┘
-└─────────────────┘ │
-▼
-┌─────────────────┐ ┌─────────────────┐ ┌─────────────────┐
-│ Alert Manager │◀────│Anomaly Detector │◀────│Feature Extractor│
-│ (Webhook/File/ │ │ (ML Models) │ │ (Enrichment) │
-│ Console) │ └─────────────────┘ └─────────────────┘
-└─────────────────┘
 
 
 ## 📦 Installation
