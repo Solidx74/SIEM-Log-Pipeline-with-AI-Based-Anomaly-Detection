@@ -159,21 +159,6 @@ python log_forwarder.py localhost 8080 --protocol http --unit sshd
 python log_forwarder.py localhost 514 --protocol syslog
 
 
-# Project Structure
-text
-siem-log-pipeline/
-├── logs/                          # Log storage directory
-├── log_collector.py               # Log receiver server
-├── log_generator.py               # Mock log generator (Windows/Mac)
-├── log_forwarder.py               # Real log forwarder (Linux only)
-├── log_parser.py                  # Raw log to JSON converter
-├── features_extraction.py         # Feature engineering
-├── anomaly_detection.py           # ML anomaly detection
-├── requirements.txt               # Python dependencies
-├── README.md                      # This file
-└── .gitignore                     # Git ignore file
-
-
 # Configuration
 Anomaly Detection Parameters
 Parameter	Default	Description
